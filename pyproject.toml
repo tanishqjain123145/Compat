@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel", "build"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "compat"
+name = "compat-runtime"
 version = "0.1.0"
 description = "Run Python functions in isolated virtualenvs configured by separate requirements files."
 readme = "README.md"

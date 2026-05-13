@@ -1,6 +1,6 @@
-# compat
+# compat-runtime
 
-`compat` helps solve Python dependency conflicts by running functions inside
+`compat-runtime` helps solve Python dependency conflicts by running functions inside
 isolated virtual environments created from separate requirements files. It is
 useful for compatibility testing, dependency isolation, and reproducing
 behavior across multiple dependency versions.
@@ -16,7 +16,7 @@ behavior across multiple dependency versions.
 ## Install
 
 ```bash
-python -m pip install compat
+python -m pip install compat-runtime
 ```
 
 For local development from a checkout:
@@ -80,7 +80,7 @@ python -m compileall -q compat
 python -m build
 python -m twine check dist/*
 python -m twine upload --repository testpypi dist/*
-python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ compat==0.1.0
+python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ compat-runtime==0.1.0
 python -m twine upload dist/*
 ```
 
