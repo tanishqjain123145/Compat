@@ -67,12 +67,6 @@ Cache locations follow the host platform:
 - macOS: `~/Library/Caches/compat_runtime/envs`
 - Linux: `$XDG_CACHE_HOME/compat_runtime/envs` or `~/.compat_runtime/envs`
 
-## Test
-
-```bash
-python -m pytest -q
-python -m compileall -q compat
-```
 
 ## Repository
 
