@@ -1,9 +1,9 @@
 # compat
 
-`compat` runs Python functions inside isolated virtual environments created
-from separate requirements files. It is useful for compatibility testing,
-dependency isolation, and reproducing behavior across multiple dependency
-versions.
+`compat` helps solve Python dependency conflicts by running functions inside
+isolated virtual environments created from separate requirements files. It is
+useful for compatibility testing, dependency isolation, and reproducing
+behavior across multiple dependency versions.
 
 ## Features
 
