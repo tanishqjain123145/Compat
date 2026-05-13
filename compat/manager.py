@@ -1,5 +1,5 @@
 """
-RuntimeManager: venv lifecycle + function dispatch.
+RuntimeManager: venv lifecycle and function dispatch.
 by Tanishq Jain
 """
 
@@ -11,6 +11,7 @@ from pathlib import Path
 
 from compat.exceptions import EnvironmentBuildError, RuntimeNotFoundError
 from compat.platform import (
+    IPC_TEXT_ENCODING,
     cleanup_ipc_files,
     default_cache_dir,
     make_ipc_files,
@@ -18,14 +19,11 @@ from compat.platform import (
     subprocess_flags,
     venv_pip,
     venv_python,
-    IPC_TEXT_ENCODING,
 )
 from compat.serializer import decode_result, encode_payload
 from compat.utils import safe_env_name
 
-_WORKER_SCRIPT = (
-    Path(__file__).parent.parent / "workers" / "worker_server.py"
-).resolve()
+_WORKER_SCRIPT = Path(__file__).with_name("_worker_server.py").resolve()
 
 
 class RuntimeManager:
@@ -38,10 +36,6 @@ class RuntimeManager:
     def __init__(self, cache_dir: Path | None = None):
         self.base_dir = cache_dir or default_cache_dir()
         self.base_dir.mkdir(parents=True, exist_ok=True)
-
-    # ------------------------------------------------------------------
-    # Environment management
-    # ------------------------------------------------------------------
 
     def _hash_requirements(self, req: Path) -> str:
         digest = hashlib.sha256(req.read_bytes()).hexdigest()[:16]
@@ -59,7 +53,6 @@ class RuntimeManager:
     def _create_runtime(self, runtime_dir: Path, req: Path):
         print(f"[compat] Creating runtime: {runtime_dir.name}", flush=True)
 
-        # --- Create venv ---
         result = subprocess.run(
             [sys.executable, "-m", "venv", safe_path_str(runtime_dir)],
             capture_output=True,
@@ -67,12 +60,11 @@ class RuntimeManager:
         )
         if result.returncode != 0:
             raise EnvironmentBuildError(
-                f"venv creation failed:\n"
+                "venv creation failed:\n"
                 + result.stderr.decode(errors="replace")
             )
 
-        # --- Install deps ---
-        print(f"[compat] Installing from {req.name} …", flush=True)
+        print(f"[compat] Installing from {req.name} ...", flush=True)
         result = subprocess.run(
             [
                 safe_path_str(venv_pip(runtime_dir)),
@@ -87,16 +79,15 @@ class RuntimeManager:
         )
         if result.returncode != 0:
             raise EnvironmentBuildError(
-                f"pip install failed:\n"
+                "pip install failed:\n"
                 + result.stderr.decode(errors="replace")
                 + result.stdout.decode(errors="replace")
             )
 
-        # Stamp only after full success (partial installs never get reused)
         (runtime_dir / ".compat_ready").write_text(
             "ok", encoding=IPC_TEXT_ENCODING
         )
-        print("[compat] Runtime ready ✓", flush=True)
+        print("[compat] Runtime ready", flush=True)
 
     def invalidate(self, requirements_path: str | Path):
         rp = Path(requirements_path)
@@ -112,23 +103,23 @@ class RuntimeManager:
 
     def list_runtimes(self) -> list[dict]:
         runtimes = []
-        for d in sorted(self.base_dir.iterdir()):
-            if d.is_dir():
-                ready = (d / ".compat_ready").exists()
+        for runtime_dir in sorted(self.base_dir.iterdir()):
+            if runtime_dir.is_dir():
+                ready = (runtime_dir / ".compat_ready").exists()
                 size_mb = sum(
-                    f.stat().st_size for f in d.rglob("*") if f.is_file()
+                    path.stat().st_size
+                    for path in runtime_dir.rglob("*")
+                    if path.is_file()
                 ) / 1e6
-                runtimes.append({
-                    "name": d.name,
-                    "path": str(d),
-                    "ready": ready,
-                    "size_mb": round(size_mb, 1),
-                })
+                runtimes.append(
+                    {
+                        "name": runtime_dir.name,
+                        "path": str(runtime_dir),
+                        "ready": ready,
+                        "size_mb": round(size_mb, 1),
+                    }
+                )
         return runtimes
-
-    # ------------------------------------------------------------------
-    # Execution
-    # ------------------------------------------------------------------
 
     def execute(
         self,
@@ -147,18 +138,16 @@ class RuntimeManager:
             )
 
         runtime_dir = self._ensure_runtime(requirements)
-        python_exe  = venv_python(runtime_dir)
+        python_exe = venv_python(runtime_dir)
 
         payload = {
-            "func_name":   func_name,
-            "module":      module,
+            "func_name": func_name,
+            "module": module,
             "source_file": source_file,
-            "args":        args,
-            "kwargs":      kwargs,
+            "args": args,
+            "kwargs": kwargs,
         }
 
-        # Write payload + result to temp files (no command-line length limits,
-        # no encoding issues, works identically on all platforms).
         payload_path, result_path = make_ipc_files()
 
         try:
@@ -168,8 +157,8 @@ class RuntimeManager:
                 [
                     safe_path_str(python_exe),
                     safe_path_str(_WORKER_SCRIPT),
-                    payload_path,   # worker reads from here
-                    result_path,    # worker writes to here
+                    payload_path,
+                    result_path,
                 ],
                 capture_output=True,
                 creationflags=subprocess_flags(),
@@ -178,11 +167,8 @@ class RuntimeManager:
             result_bytes = Path(result_path).read_bytes()
 
             if result_bytes:
-                # Result envelope written — decode it regardless of exit code.
-                # decode_result() raises WorkerError for error envelopes.
                 return decode_result(result_bytes)
 
-            # Empty result = hard crash before the worker could write anything
             if proc.returncode != 0:
                 stderr = proc.stderr.decode(errors="replace").strip()
                 stdout = proc.stdout.decode(errors="replace").strip()
@@ -192,7 +178,7 @@ class RuntimeManager:
                 )
 
             raise RuntimeError(
-                "Worker produced no result — this is a compat_runtime bug."
+                "Worker produced no result; this is a compat bug."
             )
 
         finally:

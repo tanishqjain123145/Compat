@@ -1,5 +1,5 @@
 """
-compat CLI — manage cached runtime environments.
+compat CLI - manage cached runtime environments.
 by Tanishq Jain
 
 Usage:
@@ -9,7 +9,6 @@ Usage:
 """
 
 import sys
-from pathlib import Path
 
 
 def main():
@@ -38,6 +37,7 @@ def main():
 
 def _cmd_list():
     from compat.manager import RuntimeManager
+
     mgr = RuntimeManager()
     runtimes = mgr.list_runtimes()
     if not runtimes:
@@ -45,28 +45,31 @@ def _cmd_list():
         return
     print(f"{'NAME':<50}  {'SIZE':>8}  {'STATUS'}")
     print("-" * 70)
-    for r in runtimes:
-        status = "ready" if r["ready"] else "BROKEN"
-        print(f"{r['name']:<50}  {r['size_mb']:>6.1f}MB  {status}")
-    total = sum(r["size_mb"] for r in runtimes)
+    for runtime in runtimes:
+        status = "ready" if runtime["ready"] else "BROKEN"
+        print(f"{runtime['name']:<50}  {runtime['size_mb']:>6.1f}MB  {status}")
+    total = sum(runtime["size_mb"] for runtime in runtimes)
     print(f"\n{len(runtimes)} runtime(s), {total:.1f} MB total")
 
 
 def _cmd_invalidate(req_path: str):
     from compat.manager import RuntimeManager
+
     mgr = RuntimeManager()
     mgr.invalidate(req_path)
 
 
 def _cmd_clear():
     import shutil
+
     from compat.manager import RuntimeManager
+
     mgr = RuntimeManager()
     runtimes = mgr.list_runtimes()
     if not runtimes:
         print("Nothing to clear.")
         return
-    total_mb = sum(r["size_mb"] for r in runtimes)
+    total_mb = sum(runtime["size_mb"] for runtime in runtimes)
     confirm = input(
         f"Delete {len(runtimes)} runtime(s) ({total_mb:.1f} MB)? [y/N] "
     ).strip().lower()

@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel", "build"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "compat-runtime"
+name = "compat"
 version = "0.1.0"
 description = "Run Python functions in isolated virtualenvs configured by separate requirements files."
 readme = "README.md"
@@ -30,15 +30,17 @@ dependencies = []
 
 [project.optional-dependencies]
 test = ["pytest"]
+release = ["build", "twine"]
 
 [project.scripts]
 compat = "compat.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["compat*", "workers*"]
+include = ["compat*"]
+exclude = ["tests*"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-q"
-testpaths = ["."]
+testpaths = ["tests"]

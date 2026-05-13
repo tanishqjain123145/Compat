@@ -1,5 +1,5 @@
 """
-compat_runtime — Run functions in isolated venv with different dependencies.
+compat - Run functions in isolated venvs with different dependencies.
 by Tanishq Jain
 """
 
