@@ -74,19 +74,6 @@ python -m pytest -q
 python -m compileall -q compat
 ```
 
-## Build and Release
-
-```bash
-python -m build
-python -m twine check dist/*
-python -m twine upload --repository testpypi dist/*
-python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ compat-runtime==0.1.0
-python -m twine upload dist/*
-```
-
-Publishing uses standard Twine credentials. Set `TWINE_USERNAME=__token__` and
-`TWINE_PASSWORD=<token>` for the target package index before uploading.
-
 ## Repository
 
 Source code is published at:
