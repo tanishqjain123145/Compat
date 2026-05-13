@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "compat-runtime"
-version = "0.1.0"
-description = "Run Python functions in isolated virtualenvs configured by separate requirements files."
+version = "0.1.1"
+description = "Run Python functions in isolated virtualenvs with separate dependency sets."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
